@@ -234,10 +234,13 @@
 
         // Move card to done
         function markCardAsDone(cardId) {
-            const cardIndex = availableCards.findIndex(c => c.id === cardId);
-            if (cardIndex !== -1) {
-                const card = availableCards.splice(cardIndex, 1)[0];
-                doneCards.push(card);
+            const card = availableCards.find(c => c.id === cardId);
+            if (card) {
+                doneCards.push({
+                    id: generateId(),
+                    name: card.name,
+                    sourceId: card.id
+                });
                 saveToStorage();
                 renderCards();
             }
@@ -247,8 +250,7 @@
         function markCardAsAvailable(cardId) {
             const cardIndex = doneCards.findIndex(c => c.id === cardId);
             if (cardIndex !== -1) {
-                const card = doneCards.splice(cardIndex, 1)[0];
-                availableCards.push(card);
+                doneCards.splice(cardIndex, 1);
                 saveToStorage();
                 renderCards();
             }
