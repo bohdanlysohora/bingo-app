@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Card App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        #cardNameInput {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        #cardNameInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #addCardBtn {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #addCardBtn:hover {
+            background: #5568d3;
+        }
+
+        .sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            min-height: 200px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            word-wrap: break-word;
+            font-weight: 500;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .card.done {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            opacity: 0.9;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .sections {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .input-section {
+                flex-direction: column;
+            }
+
+            .cards-container {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Bingo Card App</h1>
+        
+        <div class="input-section">
+            <input 
+                type="text" 
+                id="cardNameInput" 
+                placeholder="Enter card name..." 
+                autocomplete="off"
+            >
+            <button id="addCardBtn">Add Card</button>
+        </div>
+
+        <div class="sections">
+            <div class="section">
+                <h2>Available Cards</h2>
+                <div id="availableCards" class="cards-container">
+                    <div class="empty-message">No cards yet. Add one above!</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Done Cards</h2>
+                <div id="doneCards" class="cards-container">
+                    <div class="empty-message">No completed cards yet.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let availableCards = [];
+        let doneCards = [];
+
+        // DOM elements
+        const cardNameInput = document.getElementById('cardNameInput');
+        const addCardBtn = document.getElementById('addCardBtn');
+        const availableCardsContainer = document.getElementById('availableCards');
+        const doneCardsContainer = document.getElementById('doneCards');
+
+        // Initialize from localStorage
+        function loadFromStorage() {
+            const saved = localStorage.getItem('bingoAppData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                availableCards = data.availableCards || [];
+                doneCards = data.doneCards || [];
+            }
+        }
+
+        // Save to localStorage
+        function saveToStorage() {
+            localStorage.setItem('bingoAppData', JSON.stringify({
+                availableCards,
+                doneCards
+            }));
+        }
+
+        // Generate unique ID
+        function generateId() {
+            return Date.now() + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Add a new card
+        function addCard() {
+            const name = cardNameInput.value.trim();
+            if (!name) {
+                alert('Please enter a card name!');
+                return;
+            }
+
+            const card = {
+                id: generateId(),
+                name: name
+            };
+
+            availableCards.push(card);
+            cardNameInput.value = '';
+            saveToStorage();
+            renderCards();
+            cardNameInput.focus();
+        }
+
+        // Move card to done
+        function markCardAsDone(cardId) {
+            const cardIndex = availableCards.findIndex(c => c.id === cardId);
+            if (cardIndex !== -1) {
+                const card = availableCards.splice(cardIndex, 1)[0];
+                doneCards.push(card);
+                saveToStorage();
+                renderCards();
+            }
+        }
+
+        // Move card back to available
+        function markCardAsAvailable(cardId) {
+            const cardIndex = doneCards.findIndex(c => c.id === cardId);
+            if (cardIndex !== -1) {
+                const card = doneCards.splice(cardIndex, 1)[0];
+                availableCards.push(card);
+                saveToStorage();
+                renderCards();
+            }
+        }
+
+        // Render all cards
+        function renderCards() {
+            // Render available cards
+            if (availableCards.length === 0) {
+                availableCardsContainer.innerHTML = '<div class="empty-message">No cards yet. Add one above!</div>';
+            } else {
+                availableCardsContainer.innerHTML = availableCards
+                    .map(card => `
+                        <div class="card" onclick="markCardAsDone('${card.id}')">
+                            ${card.name}
+                        </div>
+                    `)
+                    .join('');
+            }
+
+            // Render done cards
+            if (doneCards.length === 0) {
+                doneCardsContainer.innerHTML = '<div class="empty-message">No completed cards yet.</div>';
+            } else {
+                doneCardsContainer.innerHTML = doneCards
+                    .map(card => `
+                        <div class="card done" onclick="markCardAsAvailable('${card.id}')">
+                            ${card.name}
+                        </div>
+                    `)
+                    .join('');
+            }
+        }
+
+        // Event listeners
+        addCardBtn.addEventListener('click', addCard);
+        cardNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addCard();
+            }
+        });
+
+        // Initialize app
+        loadFromStorage();
+        renderCards();
+        cardNameInput.focus();
+    </script>
+</body>
+</html>
